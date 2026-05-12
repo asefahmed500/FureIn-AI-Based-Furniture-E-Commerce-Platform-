@@ -1,19 +1,60 @@
-import { Button } from "@/components/ui/button"
+import { Navbar } from "@/components/layout/navbar"
+import { HeroSection } from "@/components/home/hero-section"
+import { FeaturedCategories } from "@/components/home/featured-categories"
+import { FlashSale } from "@/components/home/flash-sale"
+import { TrendingProducts } from "@/components/home/trending-products"
+import { PromoBanner } from "@/components/home/promo-banner"
+import { BestSellers } from "@/components/home/best-sellers"
+import { CustomerReviews } from "@/components/home/customer-reviews"
+import { BrandLogos } from "@/components/home/brand-logos"
+import { Newsletter } from "@/components/home/newsletter"
+import { 
+  getTrendingProducts, 
+  getFlashSaleProducts, 
+  getBestSellers,
+  getCategories
+} from "@/lib/actions/product"
 
-export default function Page() {
+export default async function HomePage() {
+  // Fetch all data in parallel for optimal performance
+  const [trending, flashSale, bestSellers, categories] = await Promise.all([
+    getTrendingProducts(),
+    getFlashSaleProducts(),
+    getBestSellers(),
+    getCategories()
+  ])
+
   return (
-    <div className="flex min-h-svh p-6">
-      <div className="flex max-w-md min-w-0 flex-col gap-4 text-sm leading-loose">
-        <div>
-          <h1 className="font-medium">Project ready!</h1>
-          <p>You may now add components and start building.</p>
-          <p>We&apos;ve already added the button component for you.</p>
-          <Button className="mt-2">Button</Button>
-        </div>
-        <div className="font-mono text-xs text-muted-foreground">
-          (Press <kbd>d</kbd> to toggle dark mode)
-        </div>
-      </div>
+    <div className="min-h-svh flex flex-col">
+      <Navbar />
+      <main className="flex-1">
+        {/* Hero Stack */}
+        <HeroSection />
+
+        {/* Brand Recognition / Trust Indicators */}
+        <BrandLogos />
+
+        {/* Featured Lifestyle Categories Grid */}
+        <FeaturedCategories categories={categories} />
+
+        {/* Limited Time Flash Deals with Active Countdowns */}
+        <FlashSale products={flashSale} />
+
+        {/* Horizontally Snap-Scrolling Trending Recommendations */}
+        <TrendingProducts products={trending} />
+
+        {/* Customization & White-Glove Interlude Banner */}
+        <PromoBanner />
+
+        {/* Master Catalog Best Sellers with Interactive Grid/List layouts */}
+        <BestSellers products={bestSellers} />
+
+        {/* Verified Community Experience Testimonials Stack */}
+        <CustomerReviews />
+
+        {/* Exclusive Studio Priority Pass Callout */}
+        <Newsletter />
+      </main>
     </div>
   )
 }
