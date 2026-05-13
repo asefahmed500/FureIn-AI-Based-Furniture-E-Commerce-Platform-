@@ -52,7 +52,7 @@ export function CartItem({ item, isDbItem = false }: CartItemProps) {
       }
       setIsUpdating(false)
     } else {
-      updateLocalQuantity((item as LocalCartItem).id, newQuantity, selectedColor, selectedVariant)
+      updateLocalQuantity((item as LocalCartItem).id, newQuantity, selectedColor as any, selectedVariant as any)
     }
   }
 
@@ -68,7 +68,7 @@ export function CartItem({ item, isDbItem = false }: CartItemProps) {
       }
       setIsUpdating(false)
     } else {
-      removeLocalItem((item as LocalCartItem).id, selectedColor, selectedVariant)
+      removeLocalItem((item as LocalCartItem).id, selectedColor as any, selectedVariant as any)
     }
   }
 

@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import Link from "next/link"
+import Image from "next/image"
 import { Check, ChevronRight, Lock, ShieldCheck, ArrowLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
@@ -9,6 +10,9 @@ import { CheckoutForm } from "@/components/checkout/checkout-form"
 import { CheckoutPayment } from "@/components/checkout/checkout-payment"
 import { CheckoutSuccess } from "@/components/checkout/checkout-success"
 import { CartItemWithProduct } from "@/types"
+import { useSession } from "next-auth/react"
+import { useCartStore } from "@/lib/store"
+import { useRouter } from "next/navigation"
 
 type CheckoutStep = "shipping" | "payment" | "success"
 
@@ -17,6 +21,10 @@ interface CheckoutClientContentProps {
 }
 
 export function CheckoutClientContent({ initialCartItems }: CheckoutClientContentProps) {
+  const { data: session } = useSession()
+  const { items: localItems } = useCartStore()
+  const router = useRouter()
+  
   const [step, setStep] = React.useState<CheckoutStep>("shipping")
   const [shippingData, setShippingData] = React.useState<unknown>(null)
   const [mounted, setMounted] = React.useState(false)
@@ -26,17 +34,40 @@ export function CheckoutClientContent({ initialCartItems }: CheckoutClientConten
     setMounted(true)
   }, [])
 
+  const items = React.useMemo(() => {
+    if (session) {
+      return initialCartItems.map(item => ({
+        ...item.product,
+        id: item.id,
+        productId: item.product.id,
+        quantity: item.quantity,
+        variant: item.variant
+      }))
+    }
+    return localItems.map(item => ({
+      ...item,
+      productId: item.id,
+      variant: item.selectedVariant,
+      name: item.name, // Ensure compatibility with the image alt/title
+    }))
+  }, [session, initialCartItems, localItems])
+
+  React.useEffect(() => {
+    if (mounted && items.length === 0 && step !== "success") {
+      router.push("/shop")
+    }
+  }, [mounted, items.length, step, router])
+
   if (!mounted) return null
 
-  const items = initialCartItems.map(item => ({
-    ...item.product,
-    id: item.id,
-    productId: item.product.id,
-    quantity: item.quantity,
-    variant: item.variant
-  }))
-
-  const subtotal = items.reduce((acc, item) => acc + (item.price * item.quantity), 0)
+  const subtotal = items.reduce((acc, item) => {
+    let price = item.price
+    // If it's a local item, we might need to apply priceDelta if stored in the item or variants
+    // For simplicity, we assume 'price' in local items is already the base price 
+    // and if we need delta, we'd need more logic. 
+    // Actually store.ts shows price is from product.
+    return acc + (price * item.quantity)
+  }, 0)
   const shipping = subtotal > 800 ? 0 : 75
   const tax = subtotal * 0.08
   const total = subtotal + shipping + tax
@@ -115,7 +146,12 @@ export function CheckoutClientContent({ initialCartItems }: CheckoutClientConten
                   onNext={() => setStep("success")} 
                   total={total} 
                   shippingData={shippingData} 
-                  items={items}
+                  items={items.map((item: any) => ({
+                    productId: item.productId,
+                    quantity: item.quantity,
+                    price: item.price,
+                    variant: item.variant || undefined,
+                  }))}
                 />
               </div>
             )}
@@ -137,10 +173,10 @@ export function CheckoutClientContent({ initialCartItems }: CheckoutClientConten
                     {items.map((item) => (
                       <div key={item.id} className="flex gap-4">
                         <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-secondary/50 border">
-                          <img src={item.images[0]} alt={item.title} className="object-cover h-full w-full" />
+                          <Image src={item.images[0]} alt={item.name} fill className="object-cover" sizes="64px" />
                         </div>
                         <div className="flex-1 space-y-1">
-                          <p className="text-sm font-black line-clamp-1">{item.title}</p>
+                          <p className="text-sm font-black line-clamp-1">{item.name}</p>
                           <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">
                             {item.quantity} × ${item.price}
                           </p>

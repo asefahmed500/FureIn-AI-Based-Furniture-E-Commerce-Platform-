@@ -99,7 +99,7 @@ export function CartClientContent({ initialDbItems }: CartClientContentProps) {
 
             {/* Summary Sidebar */}
             <div className="lg:col-span-5 xl:col-span-4">
-              <CartSummary items={displayItems} isDbCart={!!session} />
+              <CartSummary items={displayItems as any} isDbCart={!!session} />
             </div>
           </div>
         )}

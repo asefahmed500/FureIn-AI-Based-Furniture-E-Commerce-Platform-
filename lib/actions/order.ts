@@ -12,34 +12,42 @@ export async function createOrder(data: {
   total: number
 }) {
   const session = await getServerSession(authOptions)
-  if (!session?.user?.id) return { error: "Not authenticated" }
 
   try {
-    const order = await prisma.order.create({
-      data: {
-        userId: session.user.id,
-        total: data.total,
-        status: "PENDING",
-        shippingAddress: data.shippingAddress,
-        paymentMethod: data.paymentMethod,
-        items: {
-          create: data.items.map((item) => ({
-            productId: item.productId,
-            quantity: item.quantity,
-            price: item.price,
-            variant: item.variant,
-          })),
+    const result = await prisma.$transaction(async (tx) => {
+      const order = await tx.order.create({
+        data: {
+          userId: session?.user?.id || null,
+          total: data.total,
+          status: "PENDING",
+          shippingAddress: data.shippingAddress as any,
+          paymentMethod: data.paymentMethod,
+          items: {
+            create: data.items.map((item) => ({
+              productId: item.productId,
+              quantity: item.quantity,
+              price: item.price,
+              variant: item.variant,
+            })),
+          },
         },
-      },
+      })
+
+      // Clear cart after order ONLY if user is logged in
+      if (session?.user?.id) {
+        await tx.cartItem.deleteMany({
+          where: { userId: session.user.id },
+        })
+      }
+
+      return order
     })
 
-    // Clear cart after order
-    await prisma.cartItem.deleteMany({
-      where: { userId: session.user.id },
-    })
-
-    revalidatePath("/dashboard/orders")
-    return { success: true, orderId: order.id }
+    if (session) {
+      revalidatePath("/dashboard/orders")
+    }
+    
+    return { success: true, orderId: result.id }
   } catch (error) {
     console.error("Error creating order:", error)
     return { error: "Failed to process order" }
