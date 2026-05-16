@@ -3,11 +3,11 @@
 import * as React from "react"
 import { StarRating } from "@/components/ui/star-rating"
 import { Progress } from "@/components/ui/progress"
-import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ProductWithRelations } from "@/types"
 import { Check, MessageSquare, ThumbsUp } from "lucide-react"
 import { format } from "date-fns"
+import { ReviewForm } from "./review-form"
 
 interface ReviewSectionProps {
   product: ProductWithRelations
@@ -18,11 +18,11 @@ export function ReviewSection({ product }: ReviewSectionProps) {
 
   // Simulated rating distribution based on average if no real reviews
   const distributions = [
-    { rating: 5, percentage: reviews.length > 0 ? Math.round((reviews.filter(r => r.rating === 5).length / reviews.length) * 100) : 85 },
-    { rating: 4, percentage: reviews.length > 0 ? Math.round((reviews.filter(r => r.rating === 4).length / reviews.length) * 100) : 10 },
-    { rating: 3, percentage: reviews.length > 0 ? Math.round((reviews.filter(r => r.rating === 3).length / reviews.length) * 100) : 3 },
-    { rating: 2, percentage: reviews.length > 0 ? Math.round((reviews.filter(r => r.rating === 2).length / reviews.length) * 100) : 2 },
-    { rating: 1, percentage: reviews.length > 0 ? Math.round((reviews.filter(r => r.rating === 1).length / reviews.length) * 100) : 0 },
+    { rating: 5, percentage: reviews.length > 0 ? Math.round((reviews.filter(r => r.rating === 5).length / (reviews.length || 1)) * 100) : 85 },
+    { rating: 4, percentage: reviews.length > 0 ? Math.round((reviews.filter(r => r.rating === 4).length / (reviews.length || 1)) * 100) : 10 },
+    { rating: 3, percentage: reviews.length > 0 ? Math.round((reviews.filter(r => r.rating === 3).length / (reviews.length || 1)) * 100) : 3 },
+    { rating: 2, percentage: reviews.length > 0 ? Math.round((reviews.filter(r => r.rating === 2).length / (reviews.length || 1)) * 100) : 2 },
+    { rating: 1, percentage: reviews.length > 0 ? Math.round((reviews.filter(r => r.rating === 1).length / (reviews.length || 1)) * 100) : 0 },
   ]
 
   return (
@@ -52,9 +52,7 @@ export function ReviewSection({ product }: ReviewSectionProps) {
           <p className="text-sm text-muted-foreground">
             Our reviews are strictly from verified collectors of FureIn architectural pieces.
           </p>
-          <Button variant="outline" className="font-bold border-2 hover:bg-primary hover:text-primary-foreground transition-all">
-            Share Your Experience
-          </Button>
+          <ReviewForm productId={product.id} />
         </div>
       </div>
 
@@ -85,7 +83,7 @@ export function ReviewSection({ product }: ReviewSectionProps) {
                     <div className="flex items-center gap-2">
                       <StarRating rating={review.rating} size="sm" />
                       <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
-                        {format(new Date(review.date), 'MMM dd, yyyy')}
+                        {format(new Date(review.createdAt), 'MMM dd, yyyy')}
                       </span>
                     </div>
                     <h5 className="font-black text-lg">{review.title}</h5>

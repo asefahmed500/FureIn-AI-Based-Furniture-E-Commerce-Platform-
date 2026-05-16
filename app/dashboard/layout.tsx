@@ -1,129 +1,103 @@
-"use client"
-
 import * as React from "react"
 import Link from "next/link"
-import { useRouter, usePathname } from "next/navigation"
 import { 
   LayoutDashboard, 
   Package, 
   Heart, 
   Bell, 
-  Settings, 
-  LogOut,
-  Menu,
-  X
+  Settings,
+  UserCircle,
+  ShieldCheck
 } from "lucide-react"
-import { useUserStore } from "@/lib/store"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { getServerSession } from "next-auth"
+import { authOptions } from "@/lib/auth"
+import { redirect } from "next/navigation"
+import { LogoutButton } from "@/components/auth/logout-button"
+import { DashboardNav } from "@/components/dashboard/dashboard-nav"
+import { MobileDashboardNav } from "@/components/dashboard/mobile-dashboard-nav"
 
-export default function DashboardLayout({
+export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  const { user, logout } = useUserStore()
-  const router = useRouter()
-  const pathname = usePathname()
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false)
-  const [mounted, setMounted] = React.useState(false)
+  const session = await getServerSession(authOptions)
+  
+  if (!session) {
+    redirect("/login")
+  }
 
-  React.useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setMounted(true)
-    if (mounted && !user) {
-      router.push("/login")
-    }
-  }, [user, router, mounted])
-
-  if (!mounted || !user) return null
+  const user = session.user
 
   const navItems = [
     { icon: LayoutDashboard, label: "Overview", href: "/dashboard" },
     { icon: Package, label: "Orders", href: "/dashboard/orders" },
     { icon: Heart, label: "Wishlist", href: "/dashboard/wishlist" },
+    { icon: UserCircle, label: "Profile", href: "/dashboard/profile" },
     { icon: Bell, label: "Notifications", href: "/dashboard/notifications" },
     { icon: Settings, label: "Settings", href: "/dashboard/settings" },
   ]
 
-  const handleLogout = () => {
-    logout()
-    router.push("/")
-  }
-
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-[#FAFAFA] flex flex-col font-sans">
       {/* Top Bar */}
-      <header className="h-20 border-b bg-background/80 backdrop-blur-md sticky top-0 z-40">
-        <div className="container h-full mx-auto px-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="lg:hidden"
-              onClick={() => setIsMobileMenuOpen(true)}
-            >
-              <Menu className="h-6 w-6" />
-            </Button>
-            <Link href="/" className="text-2xl font-black tracking-tighter uppercase">FUREIN</Link>
+      <header className="h-20 border-b border-zinc-100 bg-white/80 backdrop-blur-xl sticky top-0 z-40">
+        <div className="container h-full mx-auto px-6 flex items-center justify-between max-w-[1400px]">
+          <div className="flex items-center gap-6">
+            <MobileDashboardNav navItems={navItems} user={user} />
+            <Link href="/" className="text-2xl font-black tracking-tighter uppercase group">
+              <span className="group-hover:text-primary transition-colors">FUREIN</span>
+            </Link>
           </div>
           
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" className="relative">
-              <Bell className="h-5 w-5" />
-              <span className="absolute top-2.5 right-2.5 h-2 w-2 bg-primary rounded-full border-2 border-background" />
-            </Button>
-            <Separator orientation="vertical" className="h-8 mx-2" />
-            <div className="flex items-center gap-3">
+          <div className="flex items-center gap-6">
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" size="icon" className="relative h-10 w-10 rounded-xl hover:bg-zinc-50">
+                <Bell className="h-5 w-5 text-zinc-600" />
+                <span className="absolute top-2.5 right-2.5 h-2 w-2 bg-primary rounded-full border-2 border-white" />
+              </Button>
+              <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl hover:bg-zinc-50">
+                <ShieldCheck className="h-5 w-5 text-zinc-600" />
+              </Button>
+            </div>
+            <Separator orientation="vertical" className="h-6 bg-zinc-100" />
+            <div className="flex items-center gap-4 group cursor-pointer pl-2">
               <div className="text-right hidden sm:block">
-                <p className="text-xs font-black uppercase tracking-widest">{user.name}</p>
-                <p className="text-[10px] font-bold text-muted-foreground">{user.email}</p>
+                <p className="text-[10px] font-black uppercase tracking-widest leading-none mb-1">{user?.name || "User"}</p>
+                <p className="text-[9px] font-bold text-zinc-400 lowercase leading-none">{user?.email || ""}</p>
               </div>
-              <Avatar className="h-10 w-10 border-2 border-primary/20">
-                <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${user.name}`} />
-                <AvatarFallback>{user.name[0]}</AvatarFallback>
+              <Avatar className="h-10 w-10 border-2 border-zinc-50 shadow-sm group-hover:border-primary/20 transition-all">
+                <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${user?.name || "User"}`} />
+                <AvatarFallback className="bg-primary/5 text-primary text-[10px] font-black">{user?.name?.[0] || "U"}</AvatarFallback>
               </Avatar>
             </div>
           </div>
         </div>
       </header>
 
-      <div className="flex-1 container mx-auto px-4 flex gap-12 py-12">
+      <div className="flex-1 container mx-auto px-6 flex gap-16 py-12 max-w-[1400px]">
         {/* Sidebar Navigation */}
-        <aside className="hidden lg:flex w-64 flex-col gap-8 shrink-0">
-          <nav className="space-y-1">
-            {navItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`
-                  flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-black uppercase tracking-widest transition-all
-                  ${pathname === item.href ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" : "text-muted-foreground hover:bg-secondary hover:text-foreground"}
-                `}
-              >
-                <item.icon className="h-5 w-5" />
-                {item.label}
-              </Link>
-            ))}
-          </nav>
+        <aside className="hidden lg:flex w-72 flex-col gap-10 shrink-0">
+          <div className="space-y-2">
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 px-4 mb-4">Enterprise Hub</p>
+            <DashboardNav navItems={navItems} />
+          </div>
 
-          <Separator className="bg-border/50" />
+          <div className="space-y-4">
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 px-4">Account Security</p>
+            <LogoutButton />
+          </div>
 
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-black uppercase tracking-widest text-destructive hover:bg-destructive/5 transition-all"
-          >
-            <LogOut className="h-5 w-5" />
-            Logout
-          </button>
-
-          <div className="mt-auto p-6 rounded-2xl bg-secondary/30 border border-border/50">
-            <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-primary mb-2">Architectural Support</h4>
-            <p className="text-xs font-bold text-muted-foreground leading-relaxed">
-              Need assistance with your collection? Our curators are available 24/7.
+          <div className="mt-auto p-8 rounded-[2.5rem] bg-zinc-950 text-white relative overflow-hidden group">
+            <div className="absolute bottom-[-20%] right-[-20%] w-[60%] h-[60%] bg-white/5 blur-3xl rounded-full group-hover:scale-150 transition-transform duration-1000" />
+            <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-primary mb-3">Curated Support</h4>
+            <p className="text-xs font-medium text-zinc-400 leading-relaxed">
+              In need of bespoke architectural guidance? Our concierge is on standby.
             </p>
-            <Button variant="outline" className="w-full mt-4 h-9 text-[10px] font-black uppercase tracking-widest border-2 rounded-lg">
+            <Button variant="outline" className="w-full mt-6 h-11 text-[10px] font-black uppercase tracking-widest border-zinc-800 bg-zinc-900 hover:bg-zinc-800 hover:text-white rounded-xl transition-all">
               Contact Concierge
             </Button>
           </div>
@@ -134,45 +108,6 @@ export default function DashboardLayout({
           {children}
         </main>
       </div>
-
-      {/* Mobile Menu Overlay */}
-      {isMobileMenuOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden">
-          <div className="absolute inset-0 bg-background/95 backdrop-blur-sm animate-in fade-in duration-300" />
-          <div className="absolute left-0 top-0 h-full w-[280px] bg-background border-r p-8 animate-in slide-in-from-left duration-300">
-            <div className="flex items-center justify-between mb-12">
-              <span className="text-2xl font-black tracking-tighter uppercase">FureIn</span>
-              <Button variant="ghost" size="icon" onClick={() => setIsMobileMenuOpen(false)}>
-                <X className="h-6 w-6" />
-              </Button>
-            </div>
-            <nav className="space-y-4">
-              {navItems.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className={`
-                    flex items-center gap-4 text-lg font-black uppercase tracking-widest
-                    ${pathname === item.href ? "text-primary" : "text-muted-foreground"}
-                  `}
-                >
-                  <item.icon className="h-6 w-6" />
-                  {item.label}
-                </Link>
-              ))}
-              <Separator className="my-8" />
-              <button
-                onClick={handleLogout}
-                className="flex items-center gap-4 text-lg font-black uppercase tracking-widest text-destructive"
-              >
-                <LogOut className="h-6 w-6" />
-                Logout
-              </button>
-            </nav>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

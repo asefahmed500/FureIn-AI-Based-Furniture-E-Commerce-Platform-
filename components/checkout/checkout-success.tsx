@@ -5,13 +5,15 @@ import Link from "next/link"
 import { CheckCircle, Package, ArrowRight, Printer, Share2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
-export function CheckoutSuccess() {
-  const [orderNumber, setOrderNumber] = React.useState<string>("")
+import { useSession } from "next-auth/react"
 
-  React.useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setOrderNumber(Math.random().toString(36).substring(2, 10).toUpperCase())
-  }, [])
+interface CheckoutSuccessProps {
+  orderId: string
+}
+
+export function CheckoutSuccess({ orderId }: CheckoutSuccessProps) {
+  const { data: session } = useSession()
+  const displayId = orderId.slice(-8).toUpperCase()
 
   return (
     <div className="flex flex-col items-center justify-center py-12 text-center animate-in zoom-in-95 fade-in duration-700">
@@ -27,7 +29,7 @@ export function CheckoutSuccess() {
           Acquisition Successful
         </h2>
         <p className="text-muted-foreground font-medium text-lg leading-relaxed">
-          Your architectural order <span className="font-black text-foreground">#{orderNumber}</span> has been confirmed. Our curators are now preparing your collection for transit.
+          Your architectural order <span className="font-black text-foreground">#ORD-{displayId}</span> has been confirmed. Our curators are now preparing your collection for transit.
         </p>
       </div>
 
@@ -37,14 +39,14 @@ export function CheckoutSuccess() {
             <Package className="h-5 w-5 text-primary" />
             <span className="font-black uppercase tracking-widest text-xs">Estimated Arrival</span>
           </div>
-          <span className="font-black text-sm">May 15 - May 22, 2026</span>
+          <span className="font-black text-sm">Within 5-7 Business Days</span>
         </div>
         <div className="p-8 space-y-6">
           <p className="text-sm text-muted-foreground font-medium">
             A confirmation email with your architectural dossier and tracking information has been dispatched to your inbox.
           </p>
           <div className="flex gap-4">
-            <Button variant="outline" className="flex-1 rounded-xl h-11 font-bold border-2">
+            <Button variant="outline" className="flex-1 rounded-xl h-11 font-bold border-2" onClick={() => window.print()}>
               <Printer className="mr-2 h-4 w-4" />
               Receipt
             </Button>
@@ -63,11 +65,19 @@ export function CheckoutSuccess() {
             <ArrowRight className="ml-2 h-5 w-5" />
           </Link>
         </Button>
-        <Button asChild variant="secondary" size="lg" className="h-14 px-8 rounded-xl font-bold text-lg">
-          <Link href="/dashboard">
-            View Order Status
-          </Link>
-        </Button>
+        {session ? (
+          <Button asChild variant="secondary" size="lg" className="h-14 px-8 rounded-xl font-bold text-lg">
+            <Link href="/dashboard/orders">
+              View Order Status
+            </Link>
+          </Button>
+        ) : (
+          <Button asChild variant="secondary" size="lg" className="h-14 px-8 rounded-xl font-bold text-lg">
+            <Link href="/register">
+              Create Account
+            </Link>
+          </Button>
+        )}
       </div>
     </div>
   )

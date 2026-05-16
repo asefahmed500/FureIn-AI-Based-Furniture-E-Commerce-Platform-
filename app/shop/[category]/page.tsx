@@ -31,7 +31,7 @@ export async function generateMetadata({ params }: CategoryShopPageProps): Promi
 
 export default async function CategoryShopPage({ params }: CategoryShopPageProps) {
   const { category: slug } = await params
-  const [products, categories] = await Promise.all([getProducts(), getCategories()])
+  const [{ products }, categories] = await Promise.all([getProducts(), getCategories()])
   const category = categories.find((c) => c.slug === slug)
 
   if (!category) {

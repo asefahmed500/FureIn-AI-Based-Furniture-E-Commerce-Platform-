@@ -21,8 +21,8 @@ import { toast } from "sonner"
 import { signIn } from "next-auth/react"
 
 const formSchema = z.object({
-  email: z.string().email("Invalid architectural address"),
-  password: z.string().min(8, "Security protocol requires 8+ characters"),
+  email: z.string().email("Invalid email address"),
+  password: z.string().min(8, "Password must be at least 8 characters"),
 })
 
 export function LoginForm() {
@@ -49,16 +49,26 @@ export function LoginForm() {
       })
 
       if (result?.error) {
-        toast.error("Invalid credentials. Entry denied.")
+        toast.error("Invalid email or password.")
         setIsLoading(false)
         return
       }
 
       toast.success("Welcome back to FureIn")
-      router.push("/")
+      
+      // Get session to check role for enterprise-level redirect
+      const res = await fetch("/api/auth/session")
+      const session = await res.json()
+      
+      if (session?.user?.role === "ADMIN") {
+        router.push("/admin")
+      } else {
+        router.push("/dashboard")
+      }
+      
       router.refresh()
     } catch {
-      toast.error("Authentication protocol failure.")
+      toast.error("Login failed. Please try again.")
     } finally {
       setIsLoading(false)
     }
@@ -67,8 +77,8 @@ export function LoginForm() {
   return (
     <div className="space-y-8">
       <div className="space-y-2 text-center">
-        <h1 className="text-3xl font-black tracking-tight uppercase tracking-[0.2em]">Secure Entry</h1>
-        <p className="text-muted-foreground font-medium text-sm">Access your curated architectural collection.</p>
+        <h1 className="text-3xl font-bold tracking-tight">Log In</h1>
+        <p className="text-muted-foreground font-medium text-sm">Access your FureIn account.</p>
       </div>
 
       <Form {...form}>
@@ -78,11 +88,11 @@ export function LoginForm() {
             name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="font-black uppercase tracking-widest text-[10px]">Vault Email</FormLabel>
+                <FormLabel className="font-bold text-xs uppercase tracking-wider">Email</FormLabel>
                 <FormControl>
                   <div className="relative">
                     <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/50" />
-                    <Input placeholder="architect@furein.com" {...field} className="h-12 pl-12 rounded-xl bg-secondary/20 border-border/50 font-medium" />
+                    <Input placeholder="your@email.com" {...field} className="h-12 pl-12 rounded-xl bg-secondary/20 border-border/50 font-medium" />
                   </div>
                 </FormControl>
                 <FormMessage className="text-[10px] font-bold" />
@@ -94,7 +104,7 @@ export function LoginForm() {
             name="password"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="font-black uppercase tracking-widest text-[10px]">Access Key</FormLabel>
+                <FormLabel className="font-bold text-xs uppercase tracking-wider">Password</FormLabel>
                 <FormControl>
                   <div className="relative">
                     <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/50" />
@@ -119,19 +129,19 @@ export function LoginForm() {
           />
 
           <div className="flex items-center justify-end">
-            <Link href="/forgot-password" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors">
-              Recover Access Key?
+            <Link href="/forgot-password" className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground hover:text-primary transition-colors">
+              Forgot Password?
             </Link>
           </div>
 
-          <Button type="submit" size="lg" disabled={isLoading} className="w-full h-14 rounded-xl font-black text-lg uppercase tracking-widest">
+          <Button type="submit" size="lg" disabled={isLoading} className="w-full h-14 rounded-xl font-bold text-lg">
             {isLoading ? (
               <div className="flex items-center gap-2">
                 <div className="h-5 w-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
-                Authorizing...
+                Logging In...
               </div>
             ) : (
-              "Authorize Entry"
+              "Log In"
             )}
           </Button>
         </form>
@@ -141,8 +151,8 @@ export function LoginForm() {
         <div className="absolute inset-0 flex items-center">
           <span className="w-full border-t border-border/50" />
         </div>
-        <div className="relative flex justify-center text-[10px] font-black uppercase tracking-[0.3em]">
-          <span className="bg-background px-4 text-muted-foreground">Direct Protocol</span>
+        <div className="relative flex justify-center text-[10px] font-bold uppercase tracking-wider">
+          <span className="bg-background px-4 text-muted-foreground">Or continue with</span>
         </div>
       </div>
 
@@ -159,9 +169,9 @@ export function LoginForm() {
 
 
       <p className="text-center text-xs font-bold text-muted-foreground">
-        New to the guild?{" "}
+        Don't have an account?{" "}
         <Link href="/register" className="text-primary hover:underline underline-offset-4">
-          Request Citizenship
+          Create Account
         </Link>
       </p>
     </div>

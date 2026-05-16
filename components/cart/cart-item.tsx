@@ -28,7 +28,7 @@ export function CartItem({ item, isDbItem = false }: CartItemProps) {
   const selectedVariant = isDbItem ? (item as CartItemWithProduct).variant : (item as LocalCartItem).selectedVariant
 
   const itemPrice = React.useMemo(() => {
-    let price = product.price
+    let price = Number(product.price)
     if (!isDbItem) {
       const localItem = item as LocalCartItem
       if (selectedVariant && localItem.variants) {
@@ -108,7 +108,7 @@ export function CartItem({ item, isDbItem = false }: CartItemProps) {
             <span className="text-lg font-black text-primary">${itemPrice}</span>
             {product.originalPrice && (
               <p className="text-xs text-muted-foreground line-through font-medium">
-                ${product.originalPrice}
+                ${Number(product.originalPrice)}
               </p>
             )}
           </div>

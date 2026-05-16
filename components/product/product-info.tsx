@@ -13,6 +13,7 @@ import { toast } from "sonner"
 import { useCartStore, ProductVariant, ProductColor } from "@/lib/store"
 import { useSession } from "next-auth/react"
 import { addToCart } from "@/lib/actions/cart"
+import { toggleWishlist } from "@/lib/actions/user"
 import { useRouter } from "next/navigation"
 
 interface ProductInfoProps {
@@ -26,13 +27,14 @@ export function ProductInfo({ product }: ProductInfoProps) {
   const { data: session } = useSession()
   const router = useRouter()
   const [isAdding, setIsAdding] = React.useState(false)
+  const [isWishlisting, setIsWishlisting] = React.useState(false)
   const [selectedColor, setSelectedColor] = React.useState(colors[0]?.name || "")
   const [selectedVariant, setSelectedVariant] = React.useState(variants[0]?.id || "")
   const [quantity, setQuantity] = React.useState(1)
   const addItem = useCartStore((state) => state.addItem)
 
   const currentPrice = React.useMemo(() => {
-    let price = product.price
+    let price = Number(product.price)
     if (selectedVariant && variants.length > 0) {
       const variant = variants.find(v => v.id === selectedVariant)
       if (variant?.priceDelta) {
@@ -47,6 +49,26 @@ export function ProductInfo({ product }: ProductInfoProps) {
     if (product.stock <= 5) return "Low Stock"
     return "In Stock"
   }, [product.stock])
+
+  const handleAddToWishlist = async () => {
+    if (!session) {
+      toast.error("Please sign in to add items to your wishlist")
+      return
+    }
+    setIsWishlisting(true)
+    try {
+      const result = await toggleWishlist(product.id)
+      if (result.success) {
+        toast.success(result.action === "added" ? "Added to wishlist" : "Removed from wishlist")
+      } else {
+        toast.error(result.error || "Failed to update wishlist")
+      }
+    } catch {
+      toast.error("An error occurred")
+    } finally {
+      setIsWishlisting(false)
+    }
+  }
 
   const handleAddToCart = async () => {
     if (session) {
@@ -65,7 +87,7 @@ export function ProductInfo({ product }: ProductInfoProps) {
         } else {
           toast.error(result.error || "Bag integration failed")
         }
-      } catch (error) {
+      } catch {
         toast.error("Structural protocol failure")
       } finally {
         setIsAdding(false)
@@ -120,7 +142,7 @@ export function ProductInfo({ product }: ProductInfoProps) {
           <span className="text-3xl font-black text-primary">${currentPrice}</span>
           {product.originalPrice && (
             <span className="text-lg text-muted-foreground line-through font-medium">
-              ${product.originalPrice}
+              ${Number(product.originalPrice)}
             </span>
           )}
         </div>
@@ -218,9 +240,13 @@ export function ProductInfo({ product }: ProductInfoProps) {
 
         {/* Secondary Actions */}
         <div className="flex items-center gap-4 pt-2">
-          <button className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors">
-            <Heart className="h-4 w-4" />
-            Add to Wishlist
+          <button 
+            className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors"
+            onClick={handleAddToWishlist}
+            disabled={isWishlisting}
+          >
+            <Heart className={`h-4 w-4 ${isWishlisting ? "animate-pulse" : ""}`} />
+            {isWishlisting ? "Updating..." : "Add to Wishlist"}
           </button>
           <button className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors">
             <Share2 className="h-4 w-4" />

@@ -56,7 +56,7 @@ export function RegisterForm() {
 
       if (result.error) {
         if (typeof result.error === 'object') {
-          Object.entries(result.error).forEach(([_key, messages]) => {
+          Object.entries(result.error).forEach(([, messages]) => {
             if (Array.isArray(messages)) {
               messages.forEach(msg => toast.error(msg))
             }
@@ -68,7 +68,7 @@ export function RegisterForm() {
         return
       }
 
-      toast.success("Citizenship Granted. Welcoming you...")
+      toast.success("Account created successfully. Logging you in...")
       
       // Automatically sign in after registration
       const loginResult = await signIn("credentials", {
@@ -78,13 +78,13 @@ export function RegisterForm() {
       })
 
       if (loginResult?.error) {
-        toast.error("Account created, but automatic entry failed. Please authorize manually.")
+        toast.error("Account created, but automatic login failed. Please log in manually.")
         router.push("/login")
       } else {
-        router.push("/")
+        router.push("/dashboard")
       }
     } catch {
-      toast.error("Structural failure in registration protocol.")
+      toast.error("Registration failed. Please try again.")
     } finally {
       setIsLoading(false)
     }
@@ -93,8 +93,8 @@ export function RegisterForm() {
   return (
     <div className="space-y-8">
       <div className="space-y-2 text-center">
-        <h1 className="text-3xl font-black tracking-tight uppercase tracking-[0.2em]">Citizenship Request</h1>
-        <p className="text-muted-foreground font-medium text-sm">Join our guild of architectural collectors.</p>
+        <h1 className="text-3xl font-bold tracking-tight">Create Account</h1>
+        <p className="text-muted-foreground font-medium text-sm">Join the FureIn community.</p>
       </div>
 
       <Form {...form}>
@@ -104,11 +104,11 @@ export function RegisterForm() {
             name="name"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="font-black uppercase tracking-widest text-[10px]">Full Name</FormLabel>
+                <FormLabel className="font-bold text-xs uppercase tracking-wider">Full Name</FormLabel>
                 <FormControl>
                   <div className="relative">
                     <User className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/50" />
-                    <Input placeholder="Marcus Vitruvius" {...field} className="h-12 pl-12 rounded-xl bg-secondary/20 border-border/50 font-medium" />
+                    <Input placeholder="John Doe" {...field} className="h-12 pl-12 rounded-xl bg-secondary/20 border-border/50 font-medium" />
                   </div>
                 </FormControl>
                 <FormMessage className="text-[10px] font-bold" />
@@ -120,11 +120,11 @@ export function RegisterForm() {
             name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="font-black uppercase tracking-widest text-[10px]">Vault Email</FormLabel>
+                <FormLabel className="font-bold text-xs uppercase tracking-wider">Email</FormLabel>
                 <FormControl>
                   <div className="relative">
                     <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/50" />
-                    <Input placeholder="architect@furein.com" {...field} className="h-12 pl-12 rounded-xl bg-secondary/20 border-border/50 font-medium" />
+                    <Input placeholder="your@email.com" {...field} className="h-12 pl-12 rounded-xl bg-secondary/20 border-border/50 font-medium" />
                   </div>
                 </FormControl>
                 <FormMessage className="text-[10px] font-bold" />
@@ -136,7 +136,7 @@ export function RegisterForm() {
             name="password"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="font-black uppercase tracking-widest text-[10px]">Access Key</FormLabel>
+                <FormLabel className="font-bold text-xs uppercase tracking-wider">Password</FormLabel>
                 <FormControl>
                   <div className="relative">
                     <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/50" />
@@ -173,37 +173,37 @@ export function RegisterForm() {
                   />
                 </FormControl>
                 <div className="space-y-1 leading-none">
-                  <FormLabel className="text-[10px] font-black uppercase tracking-widest leading-relaxed">
-                    I accept the structural protocols and data preservation policies.
+                  <FormLabel className="text-[10px] font-bold uppercase tracking-wider leading-relaxed">
+                    I agree to the Terms of Service and Privacy Policy.
                   </FormLabel>
                 </div>
               </FormItem>
             )}
           />
 
-          <Button type="submit" size="lg" disabled={isLoading} className="w-full h-14 rounded-xl font-black text-lg uppercase tracking-widest">
+          <Button type="submit" size="lg" disabled={isLoading} className="w-full h-14 rounded-xl font-bold text-lg">
             {isLoading ? (
               <div className="flex items-center gap-2">
                 <div className="h-5 w-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
                 Processing...
               </div>
             ) : (
-              "Request Access"
+              "Create Account"
             )}
           </Button>
         </form>
       </Form>
 
       <p className="text-center text-xs font-bold text-muted-foreground">
-        Already a citizen?{" "}
+        Already have an account?{" "}
         <Link href="/login" className="text-primary hover:underline underline-offset-4">
-          Authorize Entry
+          Log In
         </Link>
       </p>
 
       <div className="flex items-center justify-center gap-2 pt-4">
         <ShieldCheck className="h-4 w-4 text-emerald-500" />
-        <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">High-Grade Preservation Enabled</span>
+        <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Secure & Private</span>
       </div>
     </div>
   )

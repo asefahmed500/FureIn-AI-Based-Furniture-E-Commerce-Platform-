@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { ShieldCheck, Truck, ArrowRight, CreditCard } from "lucide-react"
+import { ShieldCheck, Truck, CreditCard } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { Input } from "@/components/ui/input"
@@ -23,7 +23,7 @@ export function CartSummary({ items: propItems, isDbCart = false }: CartSummaryP
   
   const subtotal = React.useMemo(() => {
     if (isDbCart && items) {
-      return items.reduce((acc: number, item: CartItemWithProduct) => acc + (item.product.price * item.quantity), 0)
+      return items.reduce((acc: number, item: CartItemWithProduct) => acc + (Number(item.product.price) * item.quantity), 0)
     }
     return localSubtotal
   }, [items, isDbCart, localSubtotal])

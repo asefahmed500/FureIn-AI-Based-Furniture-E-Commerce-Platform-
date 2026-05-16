@@ -56,7 +56,7 @@ export default async function OrdersPage() {
                 <div className="flex flex-wrap items-center gap-4">
                   <div className="text-right mr-4">
                     <p className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-1">Amount</p>
-                    <p className="font-black">${order.total.toFixed(2)}</p>
+                    <p className="font-black">${Number(order.total).toFixed(2)}</p>
                   </div>
                   <Badge className="h-8 rounded-lg font-black uppercase tracking-widest text-[10px] px-3">
                     {order.status}

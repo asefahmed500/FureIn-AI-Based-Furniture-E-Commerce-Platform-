@@ -119,7 +119,7 @@ export function Navbar() {
   const searchInputRef = React.useRef<HTMLInputElement>(null)
   
   const itemCount = useCartStore((state) => state.getItemCount())
-  const { data: session, status } = useSession()
+  const { data: session } = useSession()
   const user = session?.user
   const [mounted, setMounted] = React.useState(false)
 
@@ -191,8 +191,8 @@ export function Navbar() {
                 <span className="text-lg font-bold tracking-tight text-foreground">
                   FureIn
                 </span>
-                <span className="hidden text-[10px] tracking-widest text-muted-foreground uppercase sm:block">
-                  Crafting Comfort
+                <span className="hidden text-[10px] tracking-wider text-muted-foreground uppercase sm:block">
+                  Modern Furniture
                 </span>
               </div>
             </Link>
@@ -274,37 +274,41 @@ export function Navbar() {
           <div className="flex items-center gap-1 sm:gap-2">
             {/* Desktop Search Bar */}
             <div className="relative hidden md:block">
-              <div
-                className={cn(
-                  "flex items-center overflow-hidden rounded-xl border bg-secondary/50 transition-all duration-300",
-                  isSearchOpen ? "w-72 border-primary/30" : "w-48 border-transparent"
-                )}
-              >
-                <Search className="ml-3 h-4 w-4 shrink-0 text-muted-foreground" />
-                <input
-                  ref={searchInputRef}
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onFocus={() => setIsSearchOpen(true)}
-                  onBlur={() => {
-                    if (!searchQuery) setIsSearchOpen(false)
-                  }}
-                  placeholder="Search furniture..."
-                  className="h-9 w-full bg-transparent px-2.5 text-sm placeholder:text-muted-foreground/70 focus:outline-none"
-                />
-                {searchQuery && (
-                  <button
-                    onClick={() => {
-                      setSearchQuery("")
-                      searchInputRef.current?.focus()
+              <form action="/shop" method="GET">
+                <div
+                  className={cn(
+                    "flex items-center overflow-hidden rounded-xl border bg-secondary/50 transition-all duration-300",
+                    isSearchOpen ? "w-72 border-primary/30" : "w-48 border-transparent"
+                  )}
+                >
+                  <Search className="ml-3 h-4 w-4 shrink-0 text-muted-foreground" />
+                  <input
+                    ref={searchInputRef}
+                    name="query"
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onFocus={() => setIsSearchOpen(true)}
+                    onBlur={() => {
+                      if (!searchQuery) setIsSearchOpen(false)
                     }}
-                    className="mr-2 rounded-full p-0.5 hover:bg-muted"
-                  >
-                    <X className="h-3.5 w-3.5 text-muted-foreground" />
-                  </button>
-                )}
-              </div>
+                    placeholder="Search furniture..."
+                    className="h-9 w-full bg-transparent px-2.5 text-sm placeholder:text-muted-foreground/70 focus:outline-none"
+                  />
+                  {searchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSearchQuery("")
+                        searchInputRef.current?.focus()
+                      }}
+                      className="mr-2 rounded-full p-0.5 hover:bg-muted"
+                    >
+                      <X className="h-3.5 w-3.5 text-muted-foreground" />
+                    </button>
+                  )}
+                </div>
+              </form>
             </div>
 
             {/* Mobile Search Button */}

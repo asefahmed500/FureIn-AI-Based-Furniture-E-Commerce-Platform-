@@ -50,7 +50,6 @@ const AUTOPLAY_INTERVAL = 6000 // 6 seconds per slide
 export function HeroSection() {
   const [currentSlide, setCurrentSlide] = React.useState(0)
   const [isPlaying, setIsPlaying] = React.useState(true)
-  const [direction, setDirection] = React.useState<"next" | "prev">("next")
   const [isAnimating, setIsAnimating] = React.useState(false)
   const intervalRef = React.useRef<NodeJS.Timeout | null>(null)
 
@@ -60,7 +59,6 @@ export function HeroSection() {
   const startAutoplay = React.useCallback(() => {
     if (intervalRef.current) clearInterval(intervalRef.current)
     intervalRef.current = setInterval(() => {
-      setDirection("next")
       setIsAnimating(true)
       setCurrentSlide((prev) => (prev + 1) % slideCount)
     }, AUTOPLAY_INTERVAL)
@@ -94,7 +92,6 @@ export function HeroSection() {
   const goToSlide = React.useCallback(
     (index: number) => {
       if (index === currentSlide || isAnimating) return
-      setDirection(index > currentSlide ? "next" : "prev")
       setIsAnimating(true)
       setCurrentSlide(index)
       if (isPlaying) startAutoplay() // Reset timer
@@ -104,7 +101,6 @@ export function HeroSection() {
 
   const goNext = React.useCallback(() => {
     if (isAnimating) return
-    setDirection("next")
     setIsAnimating(true)
     setCurrentSlide((prev) => (prev + 1) % slideCount)
     if (isPlaying) startAutoplay()
@@ -112,7 +108,6 @@ export function HeroSection() {
 
   const goPrev = React.useCallback(() => {
     if (isAnimating) return
-    setDirection("prev")
     setIsAnimating(true)
     setCurrentSlide((prev) => (prev - 1 + slideCount) % slideCount)
     if (isPlaying) startAutoplay()

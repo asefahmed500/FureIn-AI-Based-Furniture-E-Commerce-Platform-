@@ -1,6 +1,5 @@
 import { getCart } from "@/lib/actions/cart"
 import { CheckoutClientContent } from "@/components/checkout/checkout-client-content"
-import { redirect } from "next/navigation"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 

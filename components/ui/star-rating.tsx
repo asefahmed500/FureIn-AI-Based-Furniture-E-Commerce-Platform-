@@ -8,6 +8,8 @@ interface StarRatingProps {
   size?: "sm" | "md" | "lg"
   showCount?: boolean
   className?: string
+  onRatingChange?: (rating: number) => void
+  interactive?: boolean
 }
 
 export function StarRating({
@@ -16,12 +18,16 @@ export function StarRating({
   size = "sm",
   showCount = true,
   className,
+  onRatingChange,
+  interactive = false,
 }: StarRatingProps) {
+  const [hoverRating, setHoverRating] = React.useState<number | null>(null)
+
   // Determine sizes
   const starSizes = {
     sm: "h-3.5 w-3.5",
-    md: "h-4 w-4",
-    lg: "h-5 w-5",
+    md: "h-5 w-5",
+    lg: "h-7 w-7",
   }
 
   const textSizes = {
@@ -30,14 +36,25 @@ export function StarRating({
     lg: "text-base",
   }
 
+  const displayRating = hoverRating !== null ? hoverRating : rating
+
   return (
     <div className={cn("flex items-center gap-1.5", className)}>
-      <div className="flex items-center gap-0.5" aria-label={`Rating: ${rating} out of 5 stars`}>
+      <div 
+        className="flex items-center gap-0.5" 
+        aria-label={`Rating: ${rating} out of 5 stars`}
+        onMouseLeave={() => interactive && setHoverRating(null)}
+      >
         {[1, 2, 3, 4, 5].map((star) => {
-          const fillPercentage = Math.max(0, Math.min(100, (rating - star + 1) * 100))
+          const fillPercentage = Math.max(0, Math.min(100, (displayRating - star + 1) * 100))
 
           return (
-            <div key={star} className="relative inline-flex">
+            <div 
+              key={star} 
+              className={cn("relative inline-flex", interactive && "cursor-pointer transition-transform hover:scale-110 active:scale-95")}
+              onMouseEnter={() => interactive && setHoverRating(star)}
+              onClick={() => interactive && onRatingChange?.(star)}
+            >
               {/* Background empty star */}
               <Star
                 className={cn(

@@ -26,6 +26,10 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Invalid credentials")
         }
 
+        if (user.isSuspended) {
+          throw new Error("Account suspended")
+        }
+
         const isCorrectPassword = await bcrypt.compare(credentials.password, user.password)
 
         if (!isCorrectPassword) {
@@ -58,7 +62,7 @@ export const authOptions: NextAuthOptions = {
     },
   },
   pages: {
-    signIn: "/login",
+    signIn: "/auth/login",
   },
   session: {
     strategy: "jwt",

@@ -7,7 +7,7 @@ import { ProductGrid } from "@/components/shop/product-grid"
 import { SortControls } from "@/components/shop/sort-controls"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Search, X, SlidersHorizontal } from "lucide-react"
+import { Search, X } from "lucide-react"
 
 import { type Product, type Category } from "@/generated/prisma/client"
 
@@ -70,7 +70,7 @@ export function ShopClientContent({
       }
 
       // Max Price Match
-      if (p.price > maxPrice) return false
+      if (Number(p.price) > maxPrice) return false
 
       // Stock Status
       if (inStockOnly && p.stock === 0) return false
@@ -91,8 +91,8 @@ export function ShopClientContent({
 
       return true
     }).sort((a, b) => {
-      if (sortBy === "price-asc") return a.price - b.price
-      if (sortBy === "price-desc") return b.price - a.price
+      if (sortBy === "price-asc") return Number(a.price) - Number(b.price)
+      if (sortBy === "price-desc") return Number(b.price) - Number(a.price)
       if (sortBy === "newest") return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       // Default: featured
       return 0

@@ -6,24 +6,26 @@ test('guest checkout flow', async ({ page }) => {
   await expect(page).toHaveTitle(/FureIn/);
 
   // 2. Add first product to cart
-  // Using the first 'Add' button found in the trending section
   const addButton = page.getByRole('button', { name: 'Add' }).first();
   await addButton.click();
   
-  // Wait for toast or local state update
-  await page.waitForTimeout(1000);
+  // Wait for the cart counter or some visual feedback
+  await page.waitForTimeout(2000);
 
   // 3. Navigate to cart
   await page.goto('/cart');
-  const cartTitle = page.getByRole('heading', { name: /Architecture \/ Cart/i });
-  await expect(cartTitle).toBeVisible();
+  await expect(page.getByRole('heading', { name: /Architecture \/ Cart/i })).toBeVisible();
+  
+  // Verify item is in cart
+  // Assuming the cart displays product names as links or headings
+  await expect(page.locator('.lg\\:col-span-7')).toContainText(/Accent Chair|Coffee Table|Sofa|Bed/);
 
   // 4. Proceed to checkout
-  const checkoutLink = page.getByRole('link', { name: /Proceed to Secure Checkout/i });
-  // If it's not a link but a button inside a link, or we just navigate
+  // Manually navigating as earlier tests showed click issues with complex layouts
   await page.goto('/checkout'); 
 
   // 5. Fill shipping information
+  await page.waitForLoadState('domcontentloaded');
   await page.fill('input[placeholder="John"]', 'Guest');
   await page.fill('input[placeholder="Doe"]', 'User');
   await page.fill('input[type="email"]', 'guest@example.com');

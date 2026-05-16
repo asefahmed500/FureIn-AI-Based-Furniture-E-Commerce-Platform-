@@ -30,6 +30,8 @@ export interface CartItem extends Omit<Product, 'variants' | 'colors' | 'dimensi
 
 interface CartStore {
   items: CartItem[]
+  _hasHydrated: boolean
+  setHasHydrated: (state: boolean) => void
   addItem: (product: Product, quantity: number, color?: string, variant?: string) => void
   removeItem: (productId: string, color?: string, variant?: string) => void
   updateQuantity: (productId: string, quantity: number, color?: string, variant?: string) => void
@@ -42,6 +44,8 @@ export const useCartStore = create<CartStore>()(
   persist(
     (set, get) => ({
       items: [],
+      _hasHydrated: false,
+      setHasHydrated: (state) => set({ _hasHydrated: state }),
       
       addItem: (product, quantity, color, variant) => {
         const currentItems = get().items
@@ -55,6 +59,7 @@ export const useCartStore = create<CartStore>()(
         // Cast JSON fields from Prisma safely
         const cartItemBase: Omit<CartItem, 'quantity' | 'selectedColor' | 'selectedVariant'> = {
           ...product,
+          price: Number(product.price) as unknown as typeof product.price,
           variants: (product.variants as unknown as ProductVariant[]) || null,
           colors: (product.colors as unknown as ProductColor[]) || null,
           dimensions: (product.dimensions as unknown as ProductDimensions) || null
@@ -100,7 +105,7 @@ export const useCartStore = create<CartStore>()(
 
       getTotalPrice: () => {
         return get().items.reduce((total, item) => {
-          let price = item.price
+          let price = Number(item.price)
           if (item.selectedVariant && item.variants) {
             const variant = item.variants.find(v => v.id === item.selectedVariant)
             if (variant?.priceDelta) {
@@ -117,6 +122,13 @@ export const useCartStore = create<CartStore>()(
     }),
     {
       name: "furein-cart-storage",
+      partialize: (state) =>
+        Object.fromEntries(
+          Object.entries(state).filter(([key]) => !["_hasHydrated"].includes(key))
+        ),
+      onRehydrateStorage: () => (state) => {
+        state?.setHasHydrated(true)
+      },
     }
   )
 )

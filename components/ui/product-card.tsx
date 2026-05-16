@@ -5,15 +5,16 @@ import Link from "next/link"
 import Image from "next/image"
 import { Heart, ShoppingBag, Eye } from "lucide-react"
 import { toast } from "sonner"
-import { type Product, type Category } from "@/generated/prisma/client"
+import { type Product } from "@/generated/prisma/client"
 import { StarRating } from "@/components/ui/star-rating"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import { addToCart } from "@/lib/actions/cart"
+import { toggleWishlist } from "@/lib/actions/user"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
-import { ProductDimensions } from "@/lib/store"
+import { useCartStore, ProductDimensions } from "@/lib/store"
 
 interface ProductCardProps {
   product: Product
@@ -30,24 +31,41 @@ export function ProductCard({
   const router = useRouter()
   const [isWishlisted, setIsWishlisted] = React.useState(false)
   const [isAdding, setIsAdding] = React.useState(false)
+  const [isWishlisting, setIsWishlisting] = React.useState(false)
+  const addItem = useCartStore((state) => state.addItem)
 
   // Calculate discount percentage if original price is present
   const discountPercent = product.originalPrice
-    ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
+    ? Math.round(((Number(product.originalPrice) - Number(product.price)) / Number(product.originalPrice)) * 100)
     : 0
 
   // Format dimensions snippet
   const dims = product.dimensions as unknown as ProductDimensions
   const dimensionString = dims ? `${dims.width}"W × ${dims.depth}"D × ${dims.height}"H` : ""
 
-  const handleWishlistToggle = (e: React.MouseEvent) => {
+  const handleWishlistToggle = async (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    setIsWishlisted(!isWishlisted)
-    if (!isWishlisted) {
-      toast.success(`${product.name} added to wishlist`)
-    } else {
-      toast.info(`${product.name} removed from wishlist`)
+
+    if (!session) {
+      toast.error("Please sign in to manage your wishlist")
+      router.push("/login")
+      return
+    }
+
+    setIsWishlisting(true)
+    try {
+      const result = await toggleWishlist(product.id)
+      if (result.success) {
+        setIsWishlisted(result.action === "added")
+        toast.success(result.action === "added" ? `${product.name} added to wishlist` : `${product.name} removed from wishlist`)
+      } else {
+        toast.error(result.error || "Failed to update wishlist")
+      }
+    } catch {
+      toast.error("Failed to update wishlist")
+    } finally {
+      setIsWishlisting(false)
     }
   }
 
@@ -56,11 +74,12 @@ export function ProductCard({
     e.stopPropagation()
 
     if (!session) {
-      toast.error("Authentication required", {
-        description: "Please authorize entry to manage your architectural bag.",
+      addItem(product, 1)
+      toast.success(`${product.name} added to bag`, {
+        description: "Structural addition successful.",
         action: {
-          label: "Login",
-          onClick: () => router.push("/login"),
+          label: "View Bag",
+          onClick: () => router.push("/cart"),
         },
       })
       return
@@ -80,7 +99,7 @@ export function ProductCard({
       } else {
         toast.error(result.error || "Bag integration failed")
       }
-    } catch (error) {
+    } catch {
       toast.error("Structural protocol failure")
     } finally {
       setIsAdding(false)
@@ -180,11 +199,11 @@ export function ProductCard({
           <div className="mt-4 flex items-end justify-between gap-4 border-t pt-4">
             <div className="flex flex-wrap items-baseline gap-2">
               <span className="text-xl font-extrabold text-foreground">
-                ${product.price}
-              </span>
+                 ${Number(product.price)}
+               </span>
               {product.originalPrice && (
                 <span className="text-sm font-medium text-muted-foreground line-through">
-                  ${product.originalPrice}
+                  ${Number(product.originalPrice)}
                 </span>
               )}
             </div>
@@ -311,11 +330,11 @@ export function ProductCard({
         <div className="mt-3 flex items-center justify-between gap-2 border-t pt-3">
           <div className="flex flex-wrap items-baseline gap-1.5">
             <span className="text-base sm:text-lg font-extrabold text-foreground">
-              ${product.price}
-            </span>
+               ${Number(product.price)}
+             </span>
             {product.originalPrice && (
               <span className="text-xs font-medium text-muted-foreground line-through">
-                ${product.originalPrice}
+                ${Number(product.originalPrice)}
               </span>
             )}
           </div>

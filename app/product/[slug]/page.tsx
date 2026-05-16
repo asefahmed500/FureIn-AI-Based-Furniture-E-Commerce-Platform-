@@ -45,7 +45,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
   }
 
   // Fetch related products (same category)
-  const relatedProducts = await getProducts({ category: product.category.slug })
+  const { products: relatedProducts } = await getProducts({ category: product.category.slug })
   const filteredRelated = relatedProducts
     .filter(p => p.id !== product.id)
     .slice(0, 4)

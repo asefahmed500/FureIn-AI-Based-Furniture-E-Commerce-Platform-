@@ -5,6 +5,10 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { revalidatePath } from "next/cache"
 
+function validateId(id: string): boolean {
+  return typeof id === "string" && id.length > 0 && id.length <= 100
+}
+
 export async function getCart() {
   const session = await getServerSession(authOptions)
   if (!session?.user?.id) return []
@@ -19,7 +23,7 @@ export async function getCart() {
     return cartItems
   } catch (error) {
     console.error("Error fetching cart:", error)
-    return []
+    throw error
   }
 }
 
@@ -27,7 +31,24 @@ export async function addToCart(productId: string, quantity: number, color?: str
   const session = await getServerSession(authOptions)
   if (!session?.user?.id) return { error: "Not authenticated" }
 
+  if (!validateId(productId)) {
+    return { error: "Invalid product ID" }
+  }
+
+  if (!Number.isInteger(quantity) || quantity < 1) {
+    return { error: "Quantity must be a positive integer" }
+  }
+
   try {
+    const product = await prisma.product.findUnique({
+      where: { id: productId },
+      select: { id: true, stock: true, isArchived: true },
+    })
+
+    if (!product || product.isArchived) {
+      return { error: "Product not found" }
+    }
+
     const existingItem = await prisma.cartItem.findFirst({
       where: {
         userId: session.user.id,
@@ -38,11 +59,18 @@ export async function addToCart(productId: string, quantity: number, color?: str
     })
 
     if (existingItem) {
+      const newQuantity = existingItem.quantity + quantity
+      if (newQuantity > product.stock) {
+        return { error: "Not enough stock available" }
+      }
       await prisma.cartItem.update({
         where: { id: existingItem.id },
-        data: { quantity: existingItem.quantity + quantity },
+        data: { quantity: newQuantity },
       })
     } else {
+      if (quantity > product.stock) {
+        return { error: "Not enough stock available" }
+      }
       await prisma.cartItem.create({
         data: {
           userId: session.user.id,
@@ -65,6 +93,14 @@ export async function addToCart(productId: string, quantity: number, color?: str
 export async function updateCartItem(itemId: string, quantity: number) {
   const session = await getServerSession(authOptions)
   if (!session?.user?.id) return { error: "Not authenticated" }
+
+  if (!validateId(itemId)) {
+    return { error: "Invalid cart item ID" }
+  }
+
+  if (!Number.isInteger(quantity) || quantity < 1) {
+    return { error: "Quantity must be a positive integer" }
+  }
 
   try {
     if (quantity <= 0) {
@@ -89,6 +125,10 @@ export async function updateCartItem(itemId: string, quantity: number) {
 export async function removeFromCart(itemId: string) {
   const session = await getServerSession(authOptions)
   if (!session?.user?.id) return { error: "Not authenticated" }
+
+  if (!validateId(itemId)) {
+    return { error: "Invalid cart item ID" }
+  }
 
   try {
     await prisma.cartItem.delete({

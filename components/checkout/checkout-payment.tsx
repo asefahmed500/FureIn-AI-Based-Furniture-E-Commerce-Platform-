@@ -12,7 +12,7 @@ import { toast } from "sonner"
 import { useRouter } from "next/navigation"
 
 interface CheckoutPaymentProps {
-  onNext: () => void
+  onNext: (orderId: string) => void
   total: number
   shippingData: unknown
   items: {
@@ -23,17 +23,63 @@ interface CheckoutPaymentProps {
   }[]
 }
 
+function formatCardNumber(value: string): string {
+  const digits = value.replace(/\D/g, "").slice(0, 16)
+  return digits.replace(/(.{4})/g, "$1 ").trim()
+}
+
+function formatExpiry(value: string): string {
+  const digits = value.replace(/\D/g, "").slice(0, 4)
+  if (digits.length >= 3) return `${digits.slice(0, 2)} / ${digits.slice(2)}`
+  return digits
+}
+
+function validateCardForm(): { valid: boolean; field?: string; message?: string } {
+  const cardNumber = (document.getElementById("card-number") as HTMLInputElement)?.value || ""
+  const expiry = (document.getElementById("card-expiry") as HTMLInputElement)?.value || ""
+  const cvc = (document.getElementById("card-cvc") as HTMLInputElement)?.value || ""
+
+  const cleanNumber = cardNumber.replace(/\s/g, "")
+  if (cleanNumber.length < 13 || cleanNumber.length > 16) {
+    return { valid: false, field: "cardNumber", message: "Enter a valid card number (13-16 digits)" }
+  }
+  if (!/^\d+$/.test(cleanNumber)) {
+    return { valid: false, field: "cardNumber", message: "Card number must contain only digits" }
+  }
+  if (!/^\d{2}\s*\/\s*\d{2}$/.test(expiry.trim())) {
+    return { valid: false, field: "expiry", message: "Enter expiry as MM / YY" }
+  }
+  const [monthStr] = expiry.trim().split("/")
+  const month = parseInt(monthStr, 10)
+  if (month < 1 || month > 12) {
+    return { valid: false, field: "expiry", message: "Invalid expiry month" }
+  }
+  if (cvc.length < 3 || !/^\d+$/.test(cvc)) {
+    return { valid: false, field: "cvc", message: "Enter a valid CVC (3-4 digits)" }
+  }
+  return { valid: true }
+}
+
 export function CheckoutPayment({ onNext, total, shippingData, items }: CheckoutPaymentProps) {
   const router = useRouter()
   const [method, setMethod] = React.useState("card")
   const [isProcessing, setIsProcessing] = React.useState(false)
+  const [errors, setErrors] = React.useState<Record<string, string>>({})
   const clearLocalCart = useCartStore((state) => state.clearCart)
 
   const handlePayment = async () => {
+    if (method === "card") {
+      const validation = validateCardForm()
+      if (!validation.valid) {
+        setErrors({ [validation.field || "card"]: validation.message || "Invalid card details" })
+        return
+      }
+    }
+
     setIsProcessing(true)
-    
+    setErrors({})
+
     try {
-      // Simulate external payment processing delay
       await new Promise(resolve => setTimeout(resolve, 2000))
 
       const result = await createOrder({
@@ -42,20 +88,20 @@ export function CheckoutPayment({ onNext, total, shippingData, items }: Checkout
         items: items.map(item => ({
           productId: item.productId,
           quantity: item.quantity,
-          price: item.price,
+          price: Number(item.price),
           variant: item.variant
         })),
         total: total
       })
 
-      if (result.success) {
+      if (result.success && result.orderId) {
         clearLocalCart()
-        onNext()
+        onNext(result.orderId)
         router.refresh()
       } else {
         toast.error(result.error || "Order creation failed")
       }
-    } catch (error) {
+    } catch {
       toast.error("Structural failure in order processing")
     } finally {
       setIsProcessing(false)
@@ -111,15 +157,45 @@ export function CheckoutPayment({ onNext, total, shippingData, items }: Checkout
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2 md:col-span-2">
               <Label className="font-bold uppercase tracking-widest text-[10px]">Card Number</Label>
-              <Input placeholder="0000 0000 0000 0000" className="h-12 rounded-xl border-border/50 bg-background font-mono" />
+              <Input
+                id="card-number"
+                placeholder="0000 0000 0000 0000"
+                maxLength={19}
+                className={`h-12 rounded-xl border-border/50 bg-background font-mono ${errors.cardNumber ? "border-red-500" : ""}`}
+                onChange={(e) => {
+                  e.target.value = formatCardNumber(e.target.value)
+                  if (errors.cardNumber) setErrors((prev) => ({ ...prev, cardNumber: "" }))
+                }}
+              />
+              {errors.cardNumber && <p className="text-xs text-red-500">{errors.cardNumber}</p>}
             </div>
             <div className="space-y-2">
               <Label className="font-bold uppercase tracking-widest text-[10px]">Expiry Date</Label>
-              <Input placeholder="MM / YY" className="h-12 rounded-xl border-border/50 bg-background" />
+              <Input
+                id="card-expiry"
+                placeholder="MM / YY"
+                maxLength={7}
+                className={`h-12 rounded-xl border-border/50 bg-background font-mono ${errors.expiry ? "border-red-500" : ""}`}
+                onChange={(e) => {
+                  e.target.value = formatExpiry(e.target.value)
+                  if (errors.expiry) setErrors((prev) => ({ ...prev, expiry: "" }))
+                }}
+              />
+              {errors.expiry && <p className="text-xs text-red-500">{errors.expiry}</p>}
             </div>
             <div className="space-y-2">
               <Label className="font-bold uppercase tracking-widest text-[10px]">CVC / CVV</Label>
-              <Input placeholder="•••" className="h-12 rounded-xl border-border/50 bg-background" />
+              <Input
+                id="card-cvc"
+                placeholder="•••"
+                maxLength={4}
+                className={`h-12 rounded-xl border-border/50 bg-background font-mono ${errors.cvc ? "border-red-500" : ""}`}
+                onChange={(e) => {
+                  e.target.value = e.target.value.replace(/\D/g, "").slice(0, 4)
+                  if (errors.cvc) setErrors((prev) => ({ ...prev, cvc: "" }))
+                }}
+              />
+              {errors.cvc && <p className="text-xs text-red-500">{errors.cvc}</p>}
             </div>
           </div>
         </div>

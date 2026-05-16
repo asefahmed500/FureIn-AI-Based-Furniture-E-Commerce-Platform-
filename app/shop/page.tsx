@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 }
 
 export default async function ShopPage() {
-  const [products, categories] = await Promise.all([getProducts(), getCategories()])
+  const [{ products }, categories] = await Promise.all([getProducts(), getCategories()])
 
   return (
     <div className="min-h-svh flex flex-col bg-background">

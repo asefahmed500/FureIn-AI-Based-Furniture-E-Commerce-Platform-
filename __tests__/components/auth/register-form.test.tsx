@@ -28,15 +28,15 @@ describe('RegisterForm Component', () => {
 
   it('renders all form fields', () => {
     render(<RegisterForm />)
-    expect(screen.getByPlaceholderText('Marcus Vitruvius')).toBeInTheDocument()
-    expect(screen.getByPlaceholderText('architect@furein.com')).toBeInTheDocument()
+    expect(screen.getByPlaceholderText('John Doe')).toBeInTheDocument()
+    expect(screen.getByPlaceholderText('your@email.com')).toBeInTheDocument()
     expect(screen.getByPlaceholderText('••••••••')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /Request Access/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Create Account/i })).toBeInTheDocument()
   })
 
   it('shows validation errors for empty fields', async () => {
     render(<RegisterForm />)
-    const submitButton = screen.getByRole('button', { name: /Request Access/i })
+    const submitButton = screen.getByRole('button', { name: /Create Account/i })
     
     fireEvent.click(submitButton)
 
@@ -53,14 +53,13 @@ describe('RegisterForm Component', () => {
 
     render(<RegisterForm />)
     
-    fireEvent.change(screen.getByPlaceholderText('Marcus Vitruvius'), { target: { value: 'Test User' } })
-    fireEvent.change(screen.getByPlaceholderText('architect@furein.com'), { target: { value: 'test@example.com' } })
+    fireEvent.change(screen.getByPlaceholderText('John Doe'), { target: { value: 'Test User' } })
+    fireEvent.change(screen.getByPlaceholderText('your@email.com'), { target: { value: 'test@example.com' } })
     fireEvent.change(screen.getByPlaceholderText('••••••••'), { target: { value: 'password123' } })
     
-    // Checkbox is a bit tricky with shadcn/ui (radix), usually we click the label or the role
     fireEvent.click(screen.getByRole('checkbox'))
 
-    fireEvent.click(screen.getByRole('button', { name: /Request Access/i }))
+    fireEvent.click(screen.getByRole('button', { name: /Create Account/i }))
 
     await waitFor(() => {
       expect(signup).toHaveBeenCalledWith({

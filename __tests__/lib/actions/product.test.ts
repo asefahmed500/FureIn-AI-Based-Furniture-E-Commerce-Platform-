@@ -7,6 +7,7 @@ vi.mock('@/lib/prisma', () => ({
     product: {
       findMany: vi.fn(),
       findUnique: vi.fn(),
+      count: vi.fn(),
     },
     category: {
       findMany: vi.fn(),
@@ -21,6 +22,7 @@ describe('product actions', () => {
 
   it('getProducts should fetch products with filters', async () => {
     vi.mocked(prisma.product.findMany).mockResolvedValue([{ id: '1', name: 'Chair' }] as any)
+    vi.mocked(prisma.product.count).mockResolvedValue(1)
 
     const result = await getProducts({ category: 'chairs' })
 
@@ -29,7 +31,8 @@ describe('product actions', () => {
         category: { slug: 'chairs' }
       })
     }))
-    expect(result).toHaveLength(1)
+    expect(result.products).toHaveLength(1)
+    expect(result.total).toBe(1)
   })
 
   it('getProductBySlug should fetch a single product', async () => {

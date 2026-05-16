@@ -4,7 +4,7 @@ import * as React from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
-import { ArrowRight, MapPin, Phone, User, Mail, Building } from "lucide-react"
+import { ArrowRight, MapPin, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   Form,
@@ -63,7 +63,7 @@ export function CheckoutForm({ onNext }: CheckoutFormProps) {
             <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
               <User className="h-5 w-5 text-primary" />
             </div>
-            <h3 className="text-xl font-black uppercase tracking-widest">Contact Details</h3>
+            <h3 className="text-xl font-bold uppercase tracking-wider">Contact Info</h3>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <FormField
@@ -127,7 +127,7 @@ export function CheckoutForm({ onNext }: CheckoutFormProps) {
             <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
               <MapPin className="h-5 w-5 text-primary" />
             </div>
-            <h3 className="text-xl font-black uppercase tracking-widest">Shipping Address</h3>
+            <h3 className="text-xl font-bold uppercase tracking-wider">Shipping Address</h3>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <FormField
